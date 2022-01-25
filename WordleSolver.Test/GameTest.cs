@@ -1,3 +1,4 @@
+using System;
 using FluentAssertions;
 using Xunit;
 
@@ -15,7 +16,8 @@ public class GameTest
             "abcdef",
             "abcde"
         });
-        var game = new Game(wordTable);
+        var blockTable = new FakeBlockTable(Array.Empty<string>());
+        var game = new Game(wordTable, blockTable);
 
         var s = game.NextGuess();
 
@@ -31,7 +33,8 @@ public class GameTest
             "aabcd",
             "abcde",
         });
-        var game = new Game(wordTable);
+        var blockTable = new FakeBlockTable(Array.Empty<string>());
+        var game = new Game(wordTable, blockTable);
 
         var s = game.NextGuess();
 
@@ -47,7 +50,8 @@ public class GameTest
             "efghi",
             "fghij",
         });
-        var game = new Game(wordTable);
+        var blockTable = new FakeBlockTable(Array.Empty<string>());
+        var game = new Game(wordTable, blockTable);
         game.AddCharBlackList('a', 'b', 'c', 'd', 'e');
 
         var s = game.NextGuess();
@@ -63,7 +67,8 @@ public class GameTest
             "efghi",
             "fghij",
         });
-        var game = new Game(wordTable);
+        var blockTable = new FakeBlockTable(Array.Empty<string>());
+        var game = new Game(wordTable, blockTable);
         game.AddConfirmChar('e', 0);
 
         var s = game.NextGuess();
@@ -79,8 +84,8 @@ public class GameTest
             "bacde",
             "efghi",
         });
-
-        var game = new Game(wordTable);
+        var blockTable = new FakeBlockTable(Array.Empty<string>());
+        var game = new Game(wordTable, blockTable);
         game.AddNotInpositionChar('e', 4);
 
         var s = game.NextGuess();
@@ -96,9 +101,27 @@ public class GameTest
             "bacde",
             "efghi",
         });
-
-        var game = new Game(wordTable);
+        var blockTable = new FakeBlockTable(Array.Empty<string>());
+        var game = new Game(wordTable, blockTable);
         game.RemoveCandidates("abcde");
+
+        var s = game.NextGuess();
+        s.Should().Be("bacde");
+    }
+
+    [Fact]
+    public void 取得推薦猜測_有刪除字記錄_取得不是刪除字的其他字()
+    {
+        var wordTable = new FakeWordTable(new[]
+        {
+            "abcde",
+            "bacde",
+            "efghi",
+        });
+        var blockTable = new FakeBlockTable(new[]{
+            "abcde",
+        });
+        var game = new Game(wordTable, blockTable);
 
         var s = game.NextGuess();
         s.Should().Be("bacde");

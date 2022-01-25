@@ -2,7 +2,8 @@
 using WordleSolver;
 
 var wordTable = new WordTable();
-var game = new Game(wordTable);
+var blockWordTable = new BlockWordTable();
+var game = new Game(wordTable, blockWordTable);
 
 while (true)
 {

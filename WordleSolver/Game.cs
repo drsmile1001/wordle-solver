@@ -6,11 +6,13 @@ public class Game
 {
     private readonly List<string> _candidates = new();
     private readonly Regex _validWordPattern = new("^[a-z]{5}$");
+    private readonly IBlockWordTable _blockWordTable;
 
-    public Game(IWordTable wordTable)
+    public Game(IWordTable wordTable, IBlockWordTable blockWordTable)
     {
+        var blcokWordHashSet = new HashSet<string>(blockWordTable.GetBlockWords());
         _candidates = wordTable.GetWords()
-            .Where(w => w.Length == 5)
+            .Where(w => w.Length == 5 && !blcokWordHashSet.Contains(w))
             .Select(w => w.ToLower())
             .Where(w => _validWordPattern.IsMatch(w))
             .ToList();
@@ -21,6 +23,7 @@ public class Game
             if (dupCompar != 0) return -dupCompar;
             return a.CompareTo(b);
         });
+        _blockWordTable = blockWordTable;
     }
 
     public string? NextGuess()
@@ -43,8 +46,9 @@ public class Game
         _candidates.RemoveAll(w => w[position] == c || !w.Contains(c));
     }
 
-    public void RemoveCandidates(string v)
+    public void RemoveCandidates(string word)
     {
-        _candidates.RemoveAll(w => w == v);
+        _blockWordTable.AddWord(word);
+        _candidates.RemoveAll(w => w == word);
     }
 }
