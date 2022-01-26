@@ -12,9 +12,9 @@ public class Game
     {
         var blcokWordHashSet = new HashSet<string>(blockWordTable.GetBlockWords());
         _candidates = wordTable.GetWords()
-            .Where(w => w.Length == 5 && !blcokWordHashSet.Contains(w))
+            .Where(w => w.Length == 5)
             .Select(w => w.ToLower())
-            .Where(w => _validWordPattern.IsMatch(w))
+            .Where(w => _validWordPattern.IsMatch(w) && !blcokWordHashSet.Contains(w))
             .ToList();
 
         _candidates.Sort((a, b) =>
