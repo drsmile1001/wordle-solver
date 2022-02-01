@@ -12,4 +12,8 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Sharprompt" Version="2.4.0" />
+  </ItemGroup>
 </Project>

@@ -1,84 +1,89 @@
-﻿using System.Text.RegularExpressions;
+﻿using Sharprompt;
+using System.Text.RegularExpressions;
 using WordleSolver;
 
-var wordTable = new WordTable();
-var blockWordTable = new BlockWordTable();
-var game = new Game(wordTable, blockWordTable);
 
-while (true)
+var functionName = Prompt.Select<string>(c =>
 {
-    Console.WriteLine(string.Empty);
-    Console.WriteLine("請輸入指令");
-    var command = Console.ReadLine();
-    if (string.IsNullOrWhiteSpace(command))
+    c.Message = "選擇功能";
+    c.Items = new[] 
     {
-        Console.WriteLine("未確認到有效指令");
-        continue;
-    }
+        "解題",
+        "基準測試",
+    };
+});
 
-    if (command == "exit")
-    {
-        Console.WriteLine("指令:結束");
+switch (functionName)
+{
+    case "解題":
+        Resolve();
         break;
-    }
+    case "基準測試":
+        BenchMark();
+        break;
+    default:
+        break;
+}
 
-    if (command == "guess")
+void Resolve()
+{
+    var wordTable = new WordTable();
+    var blockWordTable = new BlockWordTable();
+    var game = new Game(wordTable, blockWordTable);
+
+    while (true)
     {
-        Console.WriteLine("指令:猜測");
         var nextGuess = game.NextGuess();
         if (nextGuess == null)
         {
             Console.WriteLine("找不到符合的字");
+            break;
         }
-        Console.WriteLine(nextGuess);
-        continue;
-    }
+        Console.WriteLine($"本次猜測:{nextGuess}");
 
-    if (command.StartsWith("result "))
-    {
-        Console.WriteLine("指令:輸入猜測結果");
-        var regex = new Regex(@"(?<c>[a-z])(?<t>[\+\-\*])");
-        var results = command["result ".Length..];
+        var inWordList = Prompt.Confirm("是否有結果？", defaultValue:true);
 
-        var matches = regex.Matches(results);
-
-        if (matches.Count != 5)
+        if(!inWordList)
         {
-            Console.WriteLine("輸入猜測結果指令格式錯誤");
+            game.RemoveCandidates(nextGuess);
             continue;
         }
-        for (var position = 0; position < 5; position++)
-        {
-            var match = matches[position];
 
-            var c = match.Groups["c"].Value[0];
-            var t = match.Groups["t"].Value;
-            switch (t)
+        var isMatch = Prompt.Confirm("是否已命中？", defaultValue: false);
+        if(isMatch)
+        {
+            break;
+        }
+
+        for (int position = 0; position < nextGuess.Length; position++)
+        {
+            var c = nextGuess[position];
+            var r = Prompt.Select<GuessResult.GuessCharType>($"第 {position + 1} 字母 {c} 結果");
+            switch (r)
             {
-                case "+":
+                case GuessResult.GuessCharType.Match:
                     game.AddConfirmChar(c, position);
                     break;
-                case "-":
-                    game.AddCharBlackList(c);
-                    break;
-                case "*":
+                case GuessResult.GuessCharType.NotInPosition:
                     game.AddNotInpositionChar(c, position);
+                    break;
+                case GuessResult.GuessCharType.None:
+                    game.AddCharBlackList(c);
                     break;
                 default:
                     break;
             }
         }
-        continue;
     }
 
-
-    if (command.StartsWith("remove "))
-    {
-        Console.WriteLine("指令:刪除候選字");
-        var word = command["remove ".Length..];
-        game.RemoveCandidates(word);
-        continue;
-    }
-    Console.WriteLine("未確認到有效指令");
-    continue;
+    Console.WriteLine("按任何鍵結束");
+    Console.ReadKey();
 }
+
+
+void BenchMark()
+{
+    throw new NotImplementedException();
+}
+
+
