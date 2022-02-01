@@ -41,6 +41,27 @@ public class GameTest
         s.Should().Be("abcde");
     }
 
+    // public void 取得推薦猜測_尚有複數候選字_優先取得更多未猜測字母的字()
+    // {
+    //     var wordTable = new FakeWordTable(new[]
+    //     {
+    //         "abcde",
+    //         "abcdf",
+    //         "fghij",
+    //     });
+    //     var blockTable = new FakeBlockTable(Array.Empty<string>());
+    //     var game = new Game(wordTable, blockTable);
+
+    //     game.AddConfirmChar('a',0);
+    //     game.AddConfirmChar('b',1);
+    //     game.AddConfirmChar('c',2);
+    //     game.AddConfirmChar('d',2);
+
+    //     var s = game.NextGuess();
+
+    //     s.Should().Be("abcde");
+    // }
+
     [Fact]
     public void 取得推薦猜測_輸入過黑名單_取得不在黑名單的字串()
     {

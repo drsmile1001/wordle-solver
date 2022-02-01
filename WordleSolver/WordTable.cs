@@ -2,10 +2,14 @@ namespace WordleSolver;
 
 public class WordTable : IWordTable
 {
+    private readonly Lazy<string[]> _words = new(() =>
+        File.ReadAllLines("words.txt")
+            .Select(w => w.Trim())
+            .ToArray()
+    );
+
     public string[] GetWords()
     {
-        return File.ReadAllLines("words.txt")
-            .Select(w => w.Trim())
-            .ToArray();
+        return _words.Value;
     }
 }

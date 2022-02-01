@@ -83,7 +83,61 @@ void Resolve()
 
 void BenchMark()
 {
-    throw new NotImplementedException();
+    var wordTable = new WordTable();
+    var words = wordTable.GetWords();
+    var blackTable = new BlockWordTable();
+    var blcokWordHashSet = new HashSet<string>(blackTable.GetBlockWords());
+    Regex _validWordPattern = new("^[a-z]{5}$");
+    var rnd = new Random();
+    var guessTimes = words
+        .Select(x => x.ToLower().Trim())
+        .Where(x => x.Length == 5)
+        .Where(w => _validWordPattern.IsMatch(w) && !blcokWordHashSet.Contains(w))
+        .OrderBy(x => rnd.Next())
+        .Take(1000)
+        .AsParallel()
+        .Select(word =>
+        {
+            var wordle = new Wordle();
+            wordle.SetAnswer(word);
+            var game = new Game(wordTable, blackTable);
+            var guessTimes = 1;
+            for (; ; guessTimes++)
+            {
+                var guess = game.NextGuess()!;
+                var result = wordle.Guess(guess);
+                if(result.GuessCharResults.All(r =>r.Type  == GuessResult.GuessCharType.Match))
+                {
+                    break;
+                }
+
+                for (int position = 0; position < guess.Length; position++)
+                {
+                    var charResult = result.GuessCharResults[position];
+                    var c = charResult.Char;
+                    switch (charResult.Type)
+                    {
+                        case GuessResult.GuessCharType.Match:
+                            game.AddConfirmChar(c, position);
+                            break;
+                        case GuessResult.GuessCharType.NotInPosition:
+                            game.AddNotInpositionChar(c, position);
+                            break;
+                        case GuessResult.GuessCharType.None:
+                            game.AddCharBlackList(c);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+
+            return guessTimes;
+        }).ToArray();
+
+    Console.WriteLine($"總猜測次數: {guessTimes.Sum()}");
+    Console.WriteLine($"平均猜測次數: {guessTimes.Average()}");
+    Console.WriteLine($"最大猜測次數: {guessTimes.Max()}");
 }
 
 
