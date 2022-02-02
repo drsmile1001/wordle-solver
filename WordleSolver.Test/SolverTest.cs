@@ -4,7 +4,7 @@ using Xunit;
 
 namespace WordleSolver.Test;
 
-public class GameTest
+public class SolverTest
 {
     [Fact]
     public void 取得推薦猜測_沒有前提_取得符合遊戲規範的字串()
@@ -17,7 +17,7 @@ public class GameTest
             "abcde"
         });
         var blockTable = new FakeBlockTable(Array.Empty<string>());
-        var game = new Game(wordTable, blockTable);
+        var game = new Solver(wordTable, blockTable);
 
         var s = game.NextGuess();
 
@@ -25,45 +25,7 @@ public class GameTest
     }
 
     [Fact]
-    public void 取得推薦猜測_字典有重複字母字_優先取得無重複字母的字()
-    {
-        var wordTable = new FakeWordTable(new[]
-        {
-            "aaabc",
-            "aabcd",
-            "abcde",
-        });
-        var blockTable = new FakeBlockTable(Array.Empty<string>());
-        var game = new Game(wordTable, blockTable);
-
-        var s = game.NextGuess();
-
-        s.Should().Be("abcde");
-    }
-
-    // public void 取得推薦猜測_尚有複數候選字_優先取得更多未猜測字母的字()
-    // {
-    //     var wordTable = new FakeWordTable(new[]
-    //     {
-    //         "abcde",
-    //         "abcdf",
-    //         "fghij",
-    //     });
-    //     var blockTable = new FakeBlockTable(Array.Empty<string>());
-    //     var game = new Game(wordTable, blockTable);
-
-    //     game.AddConfirmChar('a',0);
-    //     game.AddConfirmChar('b',1);
-    //     game.AddConfirmChar('c',2);
-    //     game.AddConfirmChar('d',2);
-
-    //     var s = game.NextGuess();
-
-    //     s.Should().Be("abcde");
-    // }
-
-    [Fact]
-    public void 取得推薦猜測_輸入過黑名單_取得不在黑名單的字串()
+    public void 取得推薦猜測_輸入過黑名單且可用以推斷唯一解_取得解答()
     {
         var wordTable = new FakeWordTable(new[]
         {
@@ -72,15 +34,15 @@ public class GameTest
             "fghij",
         });
         var blockTable = new FakeBlockTable(Array.Empty<string>());
-        var game = new Game(wordTable, blockTable);
-        game.AddCharBlackList('a', 'b', 'c', 'd', 'e');
+        var game = new Solver(wordTable, blockTable);
+        game.AddNoneChars('a', 'b', 'c', 'd', 'e');
 
         var s = game.NextGuess();
         s.Should().Be("fghij");
     }
 
     [Fact]
-    public void 取得推薦猜測_輸入過確定位置字母_取得有符合確定字母的字串()
+    public void 取得推薦猜測_輸入過確定位置字母且可利用推斷唯一解_取得解答()
     {
         var wordTable = new FakeWordTable(new[]
         {
@@ -89,7 +51,7 @@ public class GameTest
             "fghij",
         });
         var blockTable = new FakeBlockTable(Array.Empty<string>());
-        var game = new Game(wordTable, blockTable);
+        var game = new Solver(wordTable, blockTable);
         game.AddConfirmChar('e', 0);
 
         var s = game.NextGuess();
@@ -97,7 +59,7 @@ public class GameTest
     }
 
     [Fact]
-    public void 取得推薦猜測_輸入不確定位置字母_取得有在其他位置包含字母的字串()
+    public void 取得推薦猜測_輸入不確定位置字母且可用以推斷唯一解_取得解答()
     {
         var wordTable = new FakeWordTable(new[]
         {
@@ -106,7 +68,7 @@ public class GameTest
             "efghi",
         });
         var blockTable = new FakeBlockTable(Array.Empty<string>());
-        var game = new Game(wordTable, blockTable);
+        var game = new Solver(wordTable, blockTable);
         game.AddNotInpositionChar('e', 4);
 
         var s = game.NextGuess();
@@ -123,7 +85,7 @@ public class GameTest
             "efghi",
         });
         var blockTable = new FakeBlockTable(Array.Empty<string>());
-        var game = new Game(wordTable, blockTable);
+        var game = new Solver(wordTable, blockTable);
         game.RemoveCandidates("abcde");
 
         var s = game.NextGuess();
@@ -142,7 +104,7 @@ public class GameTest
         var blockTable = new FakeBlockTable(new[]{
             "abcde",
         });
-        var game = new Game(wordTable, blockTable);
+        var game = new Solver(wordTable, blockTable);
 
         var s = game.NextGuess();
         s.Should().Be("bacde");

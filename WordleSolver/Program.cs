@@ -29,23 +29,23 @@ void Resolve()
 {
     var wordTable = new WordTable();
     var blockWordTable = new BlockWordTable();
-    var game = new Game(wordTable, blockWordTable);
+    var game = new Solver(wordTable, blockWordTable);
 
     while (true)
     {
-        var nextGuess = game.NextGuess();
-        if (nextGuess == null)
+        var guess = game.NextGuess();
+        if (guess == null)
         {
             Console.WriteLine("找不到符合的字");
             break;
         }
-        Console.WriteLine($"本次猜測:{nextGuess}");
+        Console.WriteLine($"本次猜測:{guess}");
 
         var inWordList = Prompt.Confirm("是否有結果？", defaultValue:true);
 
         if(!inWordList)
         {
-            game.RemoveCandidates(nextGuess);
+            game.RemoveCandidates(guess);
             continue;
         }
 
@@ -55,9 +55,9 @@ void Resolve()
             break;
         }
 
-        for (int position = 0; position < nextGuess.Length; position++)
+        for (int position = 0; position < guess.Length; position++)
         {
-            var c = nextGuess[position];
+            var c = guess[position];
             var r = Prompt.Select<GuessResult.GuessCharType>($"第 {position + 1} 字母 {c} 結果");
             switch (r)
             {
@@ -68,7 +68,7 @@ void Resolve()
                     game.AddNotInpositionChar(c, position);
                     break;
                 case GuessResult.GuessCharType.None:
-                    game.AddCharBlackList(c);
+                    game.AddNoneChars(c);
                     break;
                 default:
                     break;
@@ -100,10 +100,12 @@ void BenchMark()
         {
             var wordle = new Wordle();
             wordle.SetAnswer(word);
-            var game = new Game(wordTable, blackTable);
+            var game = new Solver(wordTable, blackTable);
             var guessTimes = 1;
             for (; ; guessTimes++)
             {
+                if (guessTimes > 20)
+                    throw new Exception($"猜測 {word} 次數大於限制");
                 var guess = game.NextGuess()!;
                 var result = wordle.Guess(guess);
                 if(result.GuessCharResults.All(r =>r.Type  == GuessResult.GuessCharType.Match))
@@ -124,7 +126,7 @@ void BenchMark()
                             game.AddNotInpositionChar(c, position);
                             break;
                         case GuessResult.GuessCharType.None:
-                            game.AddCharBlackList(c);
+                            game.AddNoneChars(c);
                             break;
                         default:
                             break;
