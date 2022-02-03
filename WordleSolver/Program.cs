@@ -41,7 +41,7 @@ void Resolve()
         }
         Console.WriteLine($"本次猜測:{guess}");
 
-        var inWordList = Prompt.Confirm("是否有結果？", defaultValue:true);
+        var inWordList = Prompt.Confirm("是否能輸入猜測？", defaultValue:true);
 
         if(!inWordList)
         {
@@ -55,25 +55,13 @@ void Resolve()
             break;
         }
 
-        for (int position = 0; position < guess.Length; position++)
+        var charResults = guess.Select((c,position)=>
         {
-            var c = guess[position];
             var r = Prompt.Select<GuessResult.GuessCharType>($"第 {position + 1} 字母 {c} 結果");
-            switch (r)
-            {
-                case GuessResult.GuessCharType.Match:
-                    game.AddConfirmChar(c, position);
-                    break;
-                case GuessResult.GuessCharType.NotInPosition:
-                    game.AddNotInpositionChar(c, position);
-                    break;
-                case GuessResult.GuessCharType.None:
-                    game.AddNoneChars(c);
-                    break;
-                default:
-                    break;
-            }
-        }
+            return new GuessResult.GuessCharResult(c,r);
+        }).ToArray();
+
+        game.AddGuessResult(new GuessResult(charResults));
     }
 
     Console.WriteLine("按任何鍵結束");
@@ -94,12 +82,12 @@ void BenchMark()
         .Where(x => x.Length == 5)
         .Where(w => _validWordPattern.IsMatch(w) && !blcokWordHashSet.Contains(w))
         .OrderBy(x => rnd.Next())
-        .Take(1000)
-        .AsParallel()
+        .Take(10)
         .Select(word =>
         {
             var wordle = new Wordle();
             wordle.SetAnswer(word);
+            Console.WriteLine($"謎底:{word}");
             var game = new Solver(wordTable, blackTable);
             var guessTimes = 1;
             for (; ; guessTimes++)
@@ -108,30 +96,13 @@ void BenchMark()
                     throw new Exception($"猜測 {word} 次數大於限制");
                 var guess = game.NextGuess()!;
                 var result = wordle.Guess(guess);
-                if(result.GuessCharResults.All(r =>r.Type  == GuessResult.GuessCharType.Match))
+                Console.WriteLine($"猜測:{guess} 結果:{result}");
+                if (result.GuessCharResults.All(r =>r.Type  == GuessResult.GuessCharType.Match))
                 {
                     break;
                 }
 
-                for (int position = 0; position < guess.Length; position++)
-                {
-                    var charResult = result.GuessCharResults[position];
-                    var c = charResult.Char;
-                    switch (charResult.Type)
-                    {
-                        case GuessResult.GuessCharType.Match:
-                            game.AddConfirmChar(c, position);
-                            break;
-                        case GuessResult.GuessCharType.NotInPosition:
-                            game.AddNotInpositionChar(c, position);
-                            break;
-                        case GuessResult.GuessCharType.None:
-                            game.AddNoneChars(c);
-                            break;
-                        default:
-                            break;
-                    }
-                }
+                game.AddGuessResult(result);
             }
 
             return guessTimes;

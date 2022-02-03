@@ -45,5 +45,29 @@ public class WordleTest
             new GuessResult.GuessCharResult('i',GuessResult.GuessCharType.None),
             new GuessResult.GuessCharResult('j',GuessResult.GuessCharType.None),
         })},
+        new object[]{ "abcde","aacde", new GuessResult(new[]
+        {
+            new GuessResult.GuessCharResult('a',GuessResult.GuessCharType.Match),
+            new GuessResult.GuessCharResult('a',GuessResult.GuessCharType.None),
+            new GuessResult.GuessCharResult('c',GuessResult.GuessCharType.Match),
+            new GuessResult.GuessCharResult('d',GuessResult.GuessCharType.Match),
+            new GuessResult.GuessCharResult('e',GuessResult.GuessCharType.Match),
+        })},
+        new object[]{ "abcda","aacde", new GuessResult(new[]
+        {
+            new GuessResult.GuessCharResult('a',GuessResult.GuessCharType.Match),
+            new GuessResult.GuessCharResult('a',GuessResult.GuessCharType.NotInPosition),
+            new GuessResult.GuessCharResult('c',GuessResult.GuessCharType.Match),
+            new GuessResult.GuessCharResult('d',GuessResult.GuessCharType.Match),
+            new GuessResult.GuessCharResult('e',GuessResult.GuessCharType.None),
+        })},
+        new object[]{ "roath","aahed", new GuessResult(new[]
+        {
+            new GuessResult.GuessCharResult('a',GuessResult.GuessCharType.NotInPosition),
+            new GuessResult.GuessCharResult('a',GuessResult.GuessCharType.NotInPosition),
+            new GuessResult.GuessCharResult('h',GuessResult.GuessCharType.NotInPosition),
+            new GuessResult.GuessCharResult('e',GuessResult.GuessCharType.None),
+            new GuessResult.GuessCharResult('d',GuessResult.GuessCharType.None),
+        })},
     };
 }

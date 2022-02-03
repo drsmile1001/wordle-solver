@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 
 namespace WordleSolver;
@@ -7,11 +8,8 @@ public class Solver
     private readonly List<string> _candidates = new();
     private readonly Regex _validWordPattern = new("^[a-z]{5}$");
     private readonly IBlockWordTable _blockWordTable;
-    private readonly List<char> _noneChars = new();
-    private readonly List<(char c, int Position)> _confirmChars = new();
-    private readonly List<(char c, int Position)> _notInPositionChars = new();
-    private readonly List<string> _guessed = new();
-    private WordSet? _wordSet;
+    private readonly List<GuessResult> _guessed = new();
+
 
     public Solver(IWordTable wordTable, IBlockWordTable blockWordTable)
     {
@@ -27,87 +25,79 @@ public class Solver
 
     public string? NextGuess()
     {
-        string[] matchCandidates = GetMatchedWords();
-
-        if (matchCandidates.Length == 0)
+        string[] matchedCandidates = MatchWordWithFilters(_candidates, _guessed);
+        Console.WriteLine($"候選字數量:{matchedCandidates.Length}");
+        if (matchedCandidates.Length == 0)
         {
             return null;
         }
 
-        if (matchCandidates.Length == 1)
+        if (matchedCandidates.Length == 1)
         {
-            return matchCandidates[0];
+            return matchedCandidates[0];
         }
 
-        _wordSet = new WordSet(matchCandidates);
-
-        var guess = _candidates.Where(word => !_guessed.Contains(word))
-            .OrderByDescending(word => GetWordWeight(word))
+        var guess = _candidates
+            .AsParallel()
+            .Select(word =>
+            {
+                var r = new
+                {
+                    word,
+                    avgFilter = GetWordAverageFilteringLast(word, matchedCandidates)
+                };
+                return r;
+            })
+            .OrderBy(item => item.avgFilter)
             .FirstOrDefault();
-        if (guess != null)
-            _guessed.Add(guess);
-        return guess;
+        if (guess == null) return null;
+        Console.WriteLine($"推薦候選字{guess.word} 推估可縮減候選字數量至{guess.avgFilter}");
+        return guess.word;
     }
 
-    private string[] GetMatchedWords()
+    private static string[] MatchWordWithFilters(IEnumerable<string> words, IEnumerable<GuessResult> filters)
     {
-        return _candidates.Where(word =>
-        {
-            foreach (var (c, position) in _confirmChars)
-            {
-                if (word[position] != c)
-                {
-                    return false;
-                }
-            }
-
-            foreach (var (c, position) in _notInPositionChars)
-            {
-                if (word[position] == c || !word.Contains(c))
-                {
-                    return false;
-                }
-            }
-
-            if (word.Intersect(_noneChars).Any())
-            {
-                return false;
-            }
-            return true;
-        })
-        .Where(c => !_guessed.Contains(c))
-        .ToArray();
+        var result = words.Where(w => filters.All(f => f.IsMatch(w))).ToArray();
+        return result;
     }
 
-    private int GetWordWeight(string word)
+    /// <summary>
+    /// 計算某單字平均可以篩剩下的單字數量
+    /// </summary>
+    /// <param name="word"></param>
+    /// <param name="matchedCandidates"></param>
+    /// <returns></returns>
+    private double GetWordAverageFilteringLast(string word, string[] matchedCandidates)
     {
-        var wordWeight = 0;
+        var filterResult = new Dictionary<GuessResult, int>();
 
-        for (int position = 0; position < word.Length; position++)
+        var sw = Stopwatch.StartNew();
+
+        var results = new List<int>();
+
+        foreach (var answer in matchedCandidates.OrderBy(w => Guid.NewGuid()))
         {
-            var c = word[position];
-            wordWeight += _wordSet!.GetCharCountAtPosition(c, position);
+            var wordle = new Wordle();
+            wordle.SetAnswer(answer);
+            var filter = wordle.Guess(word);
+            if (filterResult.TryGetValue(filter, out var cachedValue))
+            {
+                results.Add(cachedValue);
+            }
+            else
+            {
+                var newValue = MatchWordWithFilters(matchedCandidates, new[] { filter }).Length;
+                filterResult.Add(filter, newValue);
+                results.Add(newValue);
+            }
+            if (sw.ElapsedMilliseconds > 20) break;
         }
-
-        if (word.GroupBy(c => c).Count() != 5)
-            wordWeight = (int)(wordWeight * 0.9);
-
-        return wordWeight;
+        return results.Average();
     }
 
-    public void AddNoneChars(params char[] noneChars)
+    public void AddGuessResult(GuessResult guessResult)
     {
-        _noneChars.AddRange(noneChars);
-    }
-
-    public void AddConfirmChar(char c, int position)
-    {
-        _confirmChars.Add(new (c,position));
-    }
-
-    public void AddNotInpositionChar(char c, int position)
-    {
-        _notInPositionChars.Add(new (c,position));
+        _guessed.Add(guessResult);
     }
 
     public void RemoveCandidates(string word)

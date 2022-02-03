@@ -13,20 +13,22 @@ public class Wordle
         _answer = v;
     }
 
-    public GuessResult Guess(string v)
+    public GuessResult Guess(string inputGuess)
     {
         if (_answer == null)
         {
             throw new InvalidOperationException();
         }
 
-        var charResults = v.Select((c, i) =>
+        var charResults = inputGuess.Select((c, inputPosition) =>
         {
-            if (_answer[i] == c)
+            if (_answer[inputPosition] == c)
             {
                 return new GuessResult.GuessCharResult(c, GuessResult.GuessCharType.Match);
             }
-            else if (_answer.Contains(c))
+            else if (_answer.Where((answerChar,answerPosition) => answerChar == c 
+                && answerPosition != inputPosition 
+                && inputGuess[answerPosition] != c).Any())
             {
                 return new GuessResult.GuessCharResult(c, GuessResult.GuessCharType.NotInPosition);
             }

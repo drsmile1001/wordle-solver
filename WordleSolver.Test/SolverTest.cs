@@ -35,7 +35,14 @@ public class SolverTest
         });
         var blockTable = new FakeBlockTable(Array.Empty<string>());
         var game = new Solver(wordTable, blockTable);
-        game.AddNoneChars('a', 'b', 'c', 'd', 'e');
+        game.AddGuessResult(new GuessResult(new[]
+        {
+            new GuessResult.GuessCharResult('a', GuessResult.GuessCharType.None),
+            new GuessResult.GuessCharResult('b', GuessResult.GuessCharType.None),
+            new GuessResult.GuessCharResult('c', GuessResult.GuessCharType.None),
+            new GuessResult.GuessCharResult('d', GuessResult.GuessCharType.None),
+            new GuessResult.GuessCharResult('e', GuessResult.GuessCharType.None),
+        }));
 
         var s = game.NextGuess();
         s.Should().Be("fghij");
@@ -47,15 +54,22 @@ public class SolverTest
         var wordTable = new FakeWordTable(new[]
         {
             "abcde",
-            "efghi",
+            "fghie",
             "fghij",
         });
         var blockTable = new FakeBlockTable(Array.Empty<string>());
         var game = new Solver(wordTable, blockTable);
-        game.AddConfirmChar('e', 0);
+        game.AddGuessResult(new GuessResult(new[]
+        {
+            new GuessResult.GuessCharResult('a', GuessResult.GuessCharType.None),
+            new GuessResult.GuessCharResult('b', GuessResult.GuessCharType.None),
+            new GuessResult.GuessCharResult('c', GuessResult.GuessCharType.None),
+            new GuessResult.GuessCharResult('d', GuessResult.GuessCharType.None),
+            new GuessResult.GuessCharResult('e', GuessResult.GuessCharType.Match),
+        }));
 
         var s = game.NextGuess();
-        s.Should().Be("efghi");
+        s.Should().Be("fghie");
     }
 
     [Fact]
@@ -64,15 +78,73 @@ public class SolverTest
         var wordTable = new FakeWordTable(new[]
         {
             "abcde",
-            "bacde",
+            "fghie",
             "efghi",
         });
         var blockTable = new FakeBlockTable(Array.Empty<string>());
         var game = new Solver(wordTable, blockTable);
-        game.AddNotInpositionChar('e', 4);
+        game.AddGuessResult(new GuessResult(new[]
+        {
+            new GuessResult.GuessCharResult('a', GuessResult.GuessCharType.None),
+            new GuessResult.GuessCharResult('b', GuessResult.GuessCharType.None),
+            new GuessResult.GuessCharResult('c', GuessResult.GuessCharType.None),
+            new GuessResult.GuessCharResult('d', GuessResult.GuessCharType.None),
+            new GuessResult.GuessCharResult('e', GuessResult.GuessCharType.NotInPosition),
+        }));
 
         var s = game.NextGuess();
         s.Should().Be("efghi");
+    }
+
+    [Fact]
+    public void 取得推薦猜測_輸入同字母有不存在在位置和在位置結果_取得解答()
+    {
+        var wordTable = new FakeWordTable(new[]
+        {
+            "aaaaa",
+            "bbbbb",
+            "bbbba",
+        });
+        var blockTable = new FakeBlockTable(Array.Empty<string>());
+        var game = new Solver(wordTable, blockTable);
+        game.AddGuessResult(new GuessResult(new[]
+        {
+            new GuessResult.GuessCharResult('a', GuessResult.GuessCharType.None),
+            new GuessResult.GuessCharResult('a', GuessResult.GuessCharType.None),
+            new GuessResult.GuessCharResult('a', GuessResult.GuessCharType.None),
+            new GuessResult.GuessCharResult('a', GuessResult.GuessCharType.None),
+            new GuessResult.GuessCharResult('a', GuessResult.GuessCharType.Match),
+        }));
+
+        var s = game.NextGuess();
+        s.Should().Be("bbbba");
+    }
+
+    [Fact]
+    public void 取得推薦猜測_輸入同字母有不在正確位置和在位置結果_取得解答()
+    {
+        var wordTable = new FakeWordTable(new[]
+        {
+            "acacc",
+            "bbbbb",
+            "abbbb",
+            "bbbba",
+            "bbabb",
+            "abbba",
+        });
+        var blockTable = new FakeBlockTable(Array.Empty<string>());
+        var game = new Solver(wordTable, blockTable);
+        game.AddGuessResult(new GuessResult(new[]
+        {
+            new GuessResult.GuessCharResult('a', GuessResult.GuessCharType.Match),
+            new GuessResult.GuessCharResult('c', GuessResult.GuessCharType.None),
+            new GuessResult.GuessCharResult('a', GuessResult.GuessCharType.NotInPosition),
+            new GuessResult.GuessCharResult('c', GuessResult.GuessCharType.None),
+            new GuessResult.GuessCharResult('c', GuessResult.GuessCharType.None),
+        }));
+
+        var s = game.NextGuess();
+        s.Should().Be("abbba");
     }
 
     [Fact]

@@ -7,8 +7,7 @@ public class GuessResult : IEquatable<GuessResult>
         GuessCharResults = guessCharResults;
     }
 
-
-    public GuessCharResult[] GuessCharResults { get; }
+    public IReadOnlyList<GuessCharResult> GuessCharResults { get; }
 
     public override int GetHashCode()
     {
@@ -32,6 +31,50 @@ public class GuessResult : IEquatable<GuessResult>
         return Equals((GuessResult)obj);
     }
 
+    public override string ToString()
+    {
+        return GuessCharResults
+            .Select(item => item.ToString())
+            .Aggregate((current, next) => $"{current} {next}");
+    }
+
+    public bool IsMatch(string word)
+    {
+        for (int position = 0; position < 5; position++)
+        {
+            var rule = GuessCharResults[position];
+            switch (rule.Type)
+            {
+                case GuessCharType.Match:
+                    if(word[position]!= rule.Char) return false;
+                    break;
+                case GuessCharType.NotInPosition:
+                    if (word[position] == rule.Char) return false;
+                    for (int wordPosition = 0; wordPosition < 5; wordPosition++)
+                    {
+                        var wordChar = word[wordPosition];
+                        if(wordChar == rule.Char && wordPosition != position && GuessCharResults[wordPosition].Char != wordChar) return true;
+                    }
+                    return false;
+                case GuessCharType.None:
+                    if (word[position] == rule.Char) return false;
+                    for (int wordPosition = 0; wordPosition < 5; wordPosition++)
+                    {
+                        var wordChar = word[wordPosition];
+                        if(wordChar == rule.Char)
+                        {
+                            var guessCharResult = GuessCharResults[wordPosition];
+                            if(guessCharResult.Char != wordChar || guessCharResult.Type != GuessCharType.Match) return false;
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+        return true;
+    }
+
     public enum GuessCharType
     {
         Match,
@@ -39,5 +82,18 @@ public class GuessResult : IEquatable<GuessResult>
         None,
     }
 
-    public record GuessCharResult(char Char, GuessCharType Type);
+    public record GuessCharResult(char Char, GuessCharType Type)
+    {
+        public override string ToString()
+        {
+            var sym = Type switch
+            {
+                GuessCharType.Match => "+",
+                GuessCharType.NotInPosition => "*",
+                GuessCharType.None => "-",
+                _ => throw new NotImplementedException(),
+            };
+            return $"{Char}{sym}";
+        }
+    }
 }
